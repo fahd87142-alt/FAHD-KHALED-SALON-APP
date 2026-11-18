@@ -59,6 +59,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "47790747953-8rntdfogtfe5mcbre8s2a5spprs3ndu4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdkhaled.salon",
+            "certificate_hash": "ffc19cea02bdaf2d6bf7900a6ec30ac6af57cfde"
+          }
+        },
+        {
           "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
           "client_type": 3
         }

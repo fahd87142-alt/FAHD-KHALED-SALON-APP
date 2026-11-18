@@ -3,7 +3,6 @@ package com.fahdkhaled.salon
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,11 +11,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +37,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SalonApp() {
     var phone by remember { mutableStateOf("+20") }
+    var message by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -105,7 +118,9 @@ fun SalonApp() {
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { },
+                onClick = {
+                    message = "تسجيل الدخول برقم الهاتف هيتفعل في الخطوة الجاية"
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
@@ -125,7 +140,71 @@ fun SalonApp() {
             Spacer(modifier = Modifier.height(15.dp))
 
             OutlinedButton(
-                onClick = { },
+                onClick = {
+                    scope.launch {
+                        try {
+                            loading = true
+                            message = ""
+
+                            val googleOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId(
+                                    context.getString(R.string.default_web_client_id)
+                                )
+                                .setAutoSelectEnabled(false)
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleOption)
+                                .build()
+
+                            val credentialManager =
+                                CredentialManager.create(context)
+
+                            val result = credentialManager.getCredential(
+                                context,
+                                request
+                            )
+
+                            if (
+                                result.credential.type ==
+                                GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                            ) {
+                                val googleCredential =
+                                    GoogleIdTokenCredential.createFrom(
+                                        result.credential.data
+                                    )
+
+                                val firebaseCredential =
+                                    GoogleAuthProvider.getCredential(
+                                        googleCredential.idToken,
+                                        null
+                                    )
+
+                                auth.signInWithCredential(firebaseCredential)
+                                    .addOnCompleteListener { task ->
+                                        loading = false
+
+                                        if (task.isSuccessful) {
+                                            message = "تم تسجيل الدخول بنجاح ❤️"
+                                        } else {
+                                            message = task.exception?.message
+                                                ?: "حصل خطأ أثناء تسجيل الدخول"
+                                        }
+                                    }
+                            } else {
+                                loading = false
+                                message = "نوع الحساب غير مدعوم"
+                            }
+
+                        } catch (e: Exception) {
+                            loading = false
+                            message = e.localizedMessage
+                                ?: "تعذر تسجيل الدخول باستخدام Google"
+                        }
+                    }
+                },
+                enabled = !loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
@@ -135,8 +214,20 @@ fun SalonApp() {
                 )
             ) {
                 Text(
-                    "التسجيل باستخدام Google",
+                    if (loading) "جاري تسجيل الدخول..." 
+                    else "التسجيل باستخدام Google",
                     fontSize = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            if (message.isNotEmpty()) {
+                Text(
+                    text = message,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
                 )
             }
 

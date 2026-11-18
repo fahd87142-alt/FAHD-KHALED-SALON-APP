@@ -18,8 +18,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SalonApp() {
+
     var phone by remember { mutableStateOf("+20") }
     var message by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
@@ -55,6 +57,7 @@ fun SalonApp() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+
             Text(
                 text = "✂",
                 color = Color.White,
@@ -119,7 +122,7 @@ fun SalonApp() {
 
             Button(
                 onClick = {
-                    message = "تسجيل الدخول برقم الهاتف هيتفعل في الخطوة الجاية"
+                    message = "تسجيل الهاتف هيتفعل في الخطوة القادمة"
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -146,33 +149,42 @@ fun SalonApp() {
                             loading = true
                             message = ""
 
-                            val googleOption = GetGoogleIdOption.Builder()
-                                .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId(
-                                    context.getString(R.string.default_web_client_id)
+                            val webClientId =
+                                context.getString(
+                                    R.string.default_web_client_id
                                 )
-                                .setAutoSelectEnabled(false)
-                                .build()
 
-                            val request = GetCredentialRequest.Builder()
-                                .addCredentialOption(googleOption)
-                                .build()
+                            val googleOption =
+                                GetSignInWithGoogleOption.Builder(
+                                    webClientId
+                                ).build()
+
+                            val request =
+                                GetCredentialRequest.Builder()
+                                    .addCredentialOption(googleOption)
+                                    .build()
 
                             val credentialManager =
                                 CredentialManager.create(context)
 
-                            val result = credentialManager.getCredential(
-                                context,
-                                request
-                            )
+                            val result =
+                                credentialManager.getCredential(
+                                    context,
+                                    request
+                                )
+
+                            val credential = result.credential
 
                             if (
-                                result.credential.type ==
-                                GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                                credential is CustomCredential &&
+                                credential.type ==
+                                GoogleIdTokenCredential
+                                    .TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
                             ) {
+
                                 val googleCredential =
                                     GoogleIdTokenCredential.createFrom(
-                                        result.credential.data
+                                        credential.data
                                     )
 
                                 val firebaseCredential =
@@ -181,26 +193,32 @@ fun SalonApp() {
                                         null
                                     )
 
-                                auth.signInWithCredential(firebaseCredential)
-                                    .addOnCompleteListener { task ->
-                                        loading = false
+                                auth.signInWithCredential(
+                                    firebaseCredential
+                                ).addOnCompleteListener { task ->
 
-                                        if (task.isSuccessful) {
-                                            message = "تم تسجيل الدخول بنجاح ❤️"
-                                        } else {
-                                            message = task.exception?.message
-                                                ?: "حصل خطأ أثناء تسجيل الدخول"
-                                        }
+                                    loading = false
+
+                                    if (task.isSuccessful) {
+                                        message =
+                                            "تم تسجيل الدخول بنجاح ❤️"
+                                    } else {
+                                        message =
+                                            task.exception?.localizedMessage
+                                                ?: "فشل تسجيل الدخول"
                                     }
+                                }
+
                             } else {
                                 loading = false
-                                message = "نوع الحساب غير مدعوم"
+                                message = "تعذر قراءة حساب Google"
                             }
 
                         } catch (e: Exception) {
                             loading = false
-                            message = e.localizedMessage
-                                ?: "تعذر تسجيل الدخول باستخدام Google"
+                            message =
+                                e.localizedMessage
+                                    ?: "حدث خطأ أثناء تسجيل الدخول"
                         }
                     }
                 },
@@ -214,8 +232,10 @@ fun SalonApp() {
                 )
             ) {
                 Text(
-                    if (loading) "جاري تسجيل الدخول..." 
-                    else "التسجيل باستخدام Google",
+                    if (loading)
+                        "جاري تسجيل الدخول..."
+                    else
+                        "التسجيل باستخدام Google",
                     fontSize = 16.sp
                 )
             }

@@ -5,8 +5,8 @@
     <application
         android:allowBackup="true"
         android:label="FAHD KHALED SALON"
-        android:icon="@drawable/fh"
-        android:roundIcon="@drawable/fh"
+        android:icon="@drawable/file_00000000d33c8243bcb5e12fce6dde14"
+        android:roundIcon="@drawable/file_00000000d33c8243bcb5e12fce6dde14"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 

@@ -67,6 +67,14 @@
           }
         },
         {
+          "client_id": "47790747953-ntp4ve9suvki083i7qt73eh93lbpb2cn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdkhaled.salon",
+            "certificate_hash": "8db0964f3009f3faed627377cef25ee97ff1887d"
+          }
+        },
+        {
           "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
           "client_type": 3
         }

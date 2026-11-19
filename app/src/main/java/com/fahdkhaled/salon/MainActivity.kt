@@ -32,31 +32,22 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SalonApp() {
-
     val context = LocalContext.current
     val activity = context as Activity
     val auth = remember { FirebaseAuth.getInstance() }
 
     var user by remember { mutableStateOf(auth.currentUser) }
-
     var message by remember {
         mutableStateOf(
-            if (user != null)
-                "أهلاً بيك في FAHD KHALED SALON ❤️"
-            else
-                "سجل دخولك للمتابعة"
+            if (user != null) "أهلاً بيك في FAHD KHALED SALON ❤️"
+            else "سجل دخولك للمتابعة"
         )
     }
-
     var loading by remember { mutableStateOf(false) }
 
     val googleOptions = remember {
-        GoogleSignInOptions.Builder(
-            GoogleSignInOptions.DEFAULT_SIGN_IN
-        )
-            .requestIdToken(
-                context.getString(R.string.default_web_client_id)
-            )
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
     }
@@ -65,31 +56,5 @@ fun SalonApp() {
         GoogleSignIn.getClient(activity, googleOptions)
     }
 
-    val googleLauncher =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-
-            if (result.resultCode == Activity.RESULT_OK) {
-
-                try {
-                    val task =
-                        GoogleSignIn.getSignedInAccountFromIntent(
-                            result.data
-                        )
-
-                    val account =
-                        task.getResult(ApiException::class.java)
-
-                    val idToken = account.idToken
-
-                    if (idToken.isNullOrEmpty()) {
-
-                        loading = false
-                        message = "لم يتم الحصول على بيانات حساب Google"
-
-                    } else {
-
-                        val credential =
-                            GoogleAuthProvider.getCredential(
-                                idToken,
+    val googleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.Start

@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "project_number": "47790747953",
+    "project_id": "fahdkhaled-salon",
+    "storage_bucket": "fahdkhaled-salon.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47790747953:android:fd8fa876e416a637f3c010",
+        "android_client_info": {
+          "package_name": "com.aistudio.fahdsalon.fkslon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "47790747953-dd4dgteahk5h6folivm5do173grs1ijv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.fahdsalon.fkslon",
+            "certificate_hash": "d144268af9a7eee89c29a68c903f8c35b53ddf1a"
+          }
+        },
+        {
+          "client_id": "47790747953-p9k1vhkufdra3ds2lvqpddrdqmsd1cc5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.fahdsalon.fkslon",
+            "certificate_hash": "eab791295d9fff6be4fc00984362b1e78fb8992e"
+          }
+        },
+        {
+          "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjjA_01KTh8hOdr55ZXeA_ldMDPGObMLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47790747953:android:39c36b59d42da05bf3c010",
+        "android_client_info": {
+          "package_name": "com.fahdkhaled.salon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "47790747953-8rntdfogtfe5mcbre8s2a5spprs3ndu4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdkhaled.salon",
+            "certificate_hash": "ffc19cea02bdaf2d6bf7900a6ec30ac6af57cfde"
+          }
+        },
+        {
+          "client_id": "47790747953-ntp4ve9suvki083i7qt73eh93lbpb2cn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdkhaled.salon",
+            "certificate_hash": "8db0964f3009f3faed627377cef25ee97ff1887d"
+          }
+        },
+        {
+          "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjjA_01KTh8hOdr55ZXeA_ldMDPGObMLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "47790747953-rh3e5p0duvhj8k1d7kc1tqhj4rc2uf49.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

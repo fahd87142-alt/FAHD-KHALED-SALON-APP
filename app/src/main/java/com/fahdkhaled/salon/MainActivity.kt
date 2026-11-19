@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.FirebaseException
 import com.google.firebase.auth.*
 
 class MainActivity : ComponentActivity() {
@@ -55,9 +56,7 @@ class MainActivity : ComponentActivity() {
 
     private fun sendCode() {
 
-        if (!phoneNumber.startsWith("+") ||
-            phoneNumber.length < 10
-        ) {
+        if (!phoneNumber.startsWith("+") || phoneNumber.length < 10) {
             message = "اكتب رقم الهاتف بالصيغة الدولية الصحيحة"
             return
         }
@@ -65,31 +64,32 @@ class MainActivity : ComponentActivity() {
         loading = true
         message = "جاري إرسال كود التحقق..."
 
-        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+        val callbacks =
+            object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
-            override fun onVerificationCompleted(
-                credential: PhoneAuthCredential
-            ) {
-                signIn(credential)
-            }
+                override fun onVerificationCompleted(
+                    credential: PhoneAuthCredential
+                ) {
+                    signIn(credential)
+                }
 
-            override fun onVerificationFailed(
-                e: FirebaseException
-            ) {
-                loading = false
-                message = e.localizedMessage ?: "فشل إرسال الكود"
-            }
+                override fun onVerificationFailed(
+                    e: FirebaseException
+                ) {
+                    loading = false
+                    message = e.localizedMessage ?: "فشل إرسال الكود"
+                }
 
-            override fun onCodeSent(
-                id: String,
-                token: PhoneAuthProvider.ForceResendingToken
-            ) {
-                loading = false
-                verificationId = id
-                codeSent = true
-                message = "تم إرسال الكود إلى هاتفك ❤️"
+                override fun onCodeSent(
+                    id: String,
+                    token: PhoneAuthProvider.ForceResendingToken
+                ) {
+                    loading = false
+                    verificationId = id
+                    codeSent = true
+                    message = "تم إرسال الكود إلى هاتفك ❤️"
+                }
             }
-        }
 
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(phoneNumber)
@@ -202,21 +202,4 @@ fun SalonApp(
 
                     Text(
                         text = user.phoneNumber ?: "",
-                        color = Color.LightGray
-                    )
-
-                } else {
-
-                    OutlinedTextField(
-                        value = phone,
-                        onValueChange = onPhoneChange,
-                        label = { Text("رقم الهاتف") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Phone
-                        ),
-                        singleLine = true
-                    )
-
-                    if (codeSent) {
-
-                        Spacer
+                        color = Color.Light

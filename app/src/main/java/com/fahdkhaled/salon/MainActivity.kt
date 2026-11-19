@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SalonApp() {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = context as Activity
     val auth = remember { FirebaseAuth.getInstance() }
     val scope = rememberCoroutineScope()
 
@@ -98,21 +98,20 @@ fun SalonApp() {
                 } else {
                     Button(
                         onClick = {
-                            if (activity == null) {
-                                message = "حصل خطأ في فتح تسجيل الدخول"
-                                return@Button
-                            }
-
                             scope.launch {
                                 loading = true
                                 message = "جاري تسجيل الدخول..."
 
                                 try {
                                     val webClientId =
-                                        context.getString(R.string.default_web_client_id)
+                                        context.getString(
+                                            R.string.default_web_client_id
+                                        )
 
                                     val googleOption =
-                                        GetSignInWithGoogleOption.Builder(webClientId)
+                                        GetGoogleIdOption.Builder()
+                                            .setServerClientId(webClientId)
+                                            .setFilterByAuthorizedAccounts(false)
                                             .build()
 
                                     val request =
@@ -181,7 +180,8 @@ fun SalonApp() {
                         )
                     ) {
                         Text(
-                            text = if (loading) "جاري التحميل..." else "تسجيل الدخول بحساب Google"
+                            if (loading) "جاري التحميل..."
+                            else "تسجيل الدخول بحساب Google"
                         )
                     }
                 }

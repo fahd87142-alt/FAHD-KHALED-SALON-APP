@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -55,7 +56,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun sendCode() {
-
         if (!phoneNumber.startsWith("+") || phoneNumber.length < 10) {
             message = "اكتب رقم الهاتف بالصيغة الدولية الصحيحة"
             return
@@ -73,9 +73,7 @@ class MainActivity : ComponentActivity() {
                     signIn(credential)
                 }
 
-                override fun onVerificationFailed(
-                    e: FirebaseException
-                ) {
+                override fun onVerificationFailed(e: FirebaseException) {
                     loading = false
                     message = e.localizedMessage ?: "فشل إرسال الكود"
                 }
@@ -93,7 +91,7 @@ class MainActivity : ComponentActivity() {
 
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(phoneNumber)
-            .setTimeout(60L, java.util.concurrent.TimeUnit.SECONDS)
+            .setTimeout(60L, TimeUnit.SECONDS)
             .setActivity(this)
             .setCallbacks(callbacks)
             .build()
@@ -102,7 +100,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun verifyCode() {
-
         val id = verificationId
 
         if (id == null || smsCode.length != 6) {
@@ -113,93 +110,10 @@ class MainActivity : ComponentActivity() {
         loading = true
         message = "جاري التحقق..."
 
-        val credential = PhoneAuthProvider.getCredential(
-            id,
-            smsCode
-        )
-
+        val credential = PhoneAuthProvider.getCredential(id, smsCode)
         signIn(credential)
     }
 
     private fun signIn(credential: PhoneAuthCredential) {
-
         auth.signInWithCredential(credential)
-            .addOnCompleteListener { result ->
-
-                loading = false
-
-                if (result.isSuccessful) {
-                    currentUser = auth.currentUser
-                    message = "تم تسجيل الدخول بنجاح ❤️"
-                } else {
-                    message = result.exception?.localizedMessage
-                        ?: "فشل تسجيل الدخول"
-                }
-            }
-    }
-}
-
-@Composable
-fun SalonApp(
-    user: FirebaseUser?,
-    message: String,
-    loading: Boolean,
-    phone: String,
-    code: String,
-    codeSent: Boolean,
-    onPhoneChange: (String) -> Unit,
-    onCodeChange: (String) -> Unit,
-    onSendCode: () -> Unit,
-    onVerifyCode: () -> Unit
-) {
-
-    MaterialTheme {
-
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = Color.Black
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                Text(
-                    text = "F H",
-                    color = Color.White,
-                    fontSize = 55.sp
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "FAHD KHALED SALON",
-                    color = Color.White,
-                    fontSize = 24.sp
-                )
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                Text(
-                    text = message,
-                    color = Color.White,
-                    fontSize = 17.sp
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                if (user != null) {
-
-                    Text(
-                        text = "تم تسجيل الدخول",
-                        color = Color.White,
-                        fontSize = 20.sp
-                    )
-
-                    Text(
-                        text = user.phoneNumber ?: "",
-                        color = Color.Light
+            .add

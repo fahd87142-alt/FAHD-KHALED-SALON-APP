@@ -1,48 +1,31 @@
 package com.fahdkhaled.salon
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.*
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var googleClient: com.google.android.gms.auth.api.signin.GoogleSignInClient
 
     private var currentUser by mutableStateOf<FirebaseUser?>(null)
-    private var message by mutableStateOf("سجل دخولك للمتابعة")
+    private var message by mutableStateOf("أدخل رقم هاتفك للمتابعة")
     private var loading by mutableStateOf(false)
-
-    companion object {
-        private const val RC_SIGN_IN = 1001
-    }
+    private var verificationId by mutableStateOf<String?>(null)
+    private var codeSent by mutableStateOf(false)
+    private var phoneNumber by mutableStateOf("+20")
+    private var smsCode by mutableStateOf("")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,78 +37,105 @@ class MainActivity : ComponentActivity() {
             message = "أهلاً بيك في FAHD KHALED SALON ❤️"
         }
 
-        val options = GoogleSignInOptions.Builder(
-            GoogleSignInOptions.DEFAULT_SIGN_IN
-        )
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        googleClient = GoogleSignIn.getClient(this, options)
-
         setContent {
             SalonApp(
                 user = currentUser,
                 message = message,
                 loading = loading,
-                onLogin = { signInWithGoogle() }
+                phone = phoneNumber,
+                code = smsCode,
+                codeSent = codeSent,
+                onPhoneChange = { phoneNumber = it },
+                onCodeChange = { smsCode = it },
+                onSendCode = { sendCode() },
+                onVerifyCode = { verifyCode() }
             )
         }
     }
 
-    private fun signInWithGoogle() {
+    private fun sendCode() {
+
+        if (!phoneNumber.startsWith("+") ||
+            phoneNumber.length < 10
+        ) {
+            message = "اكتب رقم الهاتف بالصيغة الدولية الصحيحة"
+            return
+        }
+
         loading = true
-        message = "جاري فتح حسابات Google..."
+        message = "جاري إرسال كود التحقق..."
 
-        startActivityForResult(
-            googleClient.signInIntent,
-            RC_SIGN_IN
-        )
-    }
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
-    @Deprecated("Deprecated in Android")
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?
-    ) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode != RC_SIGN_IN) return
-
-        try {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            val account = task.getResult(ApiException::class.java)
-            val token = account.idToken
-
-            if (token.isNullOrEmpty()) {
-                loading = false
-                message = "لم يتم الحصول على بيانات حساب Google"
-                return
+            override fun onVerificationCompleted(
+                credential: PhoneAuthCredential
+            ) {
+                signIn(credential)
             }
 
-            val credential = GoogleAuthProvider.getCredential(token, null)
+            override fun onVerificationFailed(
+                e: FirebaseException
+            ) {
+                loading = false
+                message = e.localizedMessage ?: "فشل إرسال الكود"
+            }
 
-            auth.signInWithCredential(credential)
-                .addOnCompleteListener { result ->
-                    loading = false
-
-                    if (result.isSuccessful) {
-                        currentUser = auth.currentUser
-                        message = "تم تسجيل الدخول بنجاح ❤️"
-                    } else {
-                        message = result.exception?.localizedMessage
-                            ?: "فشل تسجيل الدخول"
-                    }
-                }
-
-        } catch (e: ApiException) {
-            loading = false
-            message = "خطأ Google رقم: ${e.statusCode}"
-        } catch (e: Exception) {
-            loading = false
-            message = e.localizedMessage ?: "حدث خطأ"
+            override fun onCodeSent(
+                id: String,
+                token: PhoneAuthProvider.ForceResendingToken
+            ) {
+                loading = false
+                verificationId = id
+                codeSent = true
+                message = "تم إرسال الكود إلى هاتفك ❤️"
+            }
         }
+
+        val options = PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(phoneNumber)
+            .setTimeout(60L, java.util.concurrent.TimeUnit.SECONDS)
+            .setActivity(this)
+            .setCallbacks(callbacks)
+            .build()
+
+        PhoneAuthProvider.verifyPhoneNumber(options)
+    }
+
+    private fun verifyCode() {
+
+        val id = verificationId
+
+        if (id == null || smsCode.length != 6) {
+            message = "أدخل كود التحقق المكون من 6 أرقام"
+            return
+        }
+
+        loading = true
+        message = "جاري التحقق..."
+
+        val credential = PhoneAuthProvider.getCredential(
+            id,
+            smsCode
+        )
+
+        signIn(credential)
+    }
+
+    private fun signIn(credential: PhoneAuthCredential) {
+
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener { result ->
+
+                loading = false
+
+                if (result.isSuccessful) {
+                    currentUser = auth.currentUser
+                    message = "تم تسجيل الدخول بنجاح ❤️"
+                } else {
+                    message = result.exception?.localizedMessage
+                        ?: "فشل تسجيل الدخول"
+                }
+            }
     }
 }
 
@@ -134,79 +144,79 @@ fun SalonApp(
     user: FirebaseUser?,
     message: String,
     loading: Boolean,
-    onLogin: () -> Unit
+    phone: String,
+    code: String,
+    codeSent: Boolean,
+    onPhoneChange: (String) -> Unit,
+    onCodeChange: (String) -> Unit,
+    onSendCode: () -> Unit,
+    onVerifyCode: () -> Unit
 ) {
+
     MaterialTheme {
+
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color.Black,
-            content = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    content = {
+            color = Color.Black
+        ) {
 
-                        Text(
-                            text = "F H",
-                            color = Color.White,
-                            fontSize = 55.sp
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "FAHD KHALED SALON",
-                            color = Color.White,
-                            fontSize = 24.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(30.dp))
-
-                        Text(
-                            text = message,
-                            color = Color.White,
-                            fontSize = 17.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(25.dp))
-
-                        if (user != null) {
-                            Text(
-                                text = user.displayName ?: "تم تسجيل الدخول",
-                                color = Color.White,
-                                fontSize = 18.sp
-                            )
-
-                            Text(
-                                text = user.email ?: "",
-                                color = Color.LightGray,
-                                fontSize = 14.sp
-                            )
-                        } else {
-                            Button(
-                                onClick = onLogin,
-                                enabled = !loading,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Black
-                                ),
-                                content = {
-                                    Text(
-                                        text = if (loading) {
-                                            "جاري التحميل..."
-                                        } else {
-                                            "تسجيل الدخول بحساب Google"
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
+                Text(
+                    text = "F H",
+                    color = Color.White,
+                    fontSize = 55.sp
                 )
-            }
-        )
-    }
-}
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "FAHD KHALED SALON",
+                    color = Color.White,
+                    fontSize = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                Text(
+                    text = message,
+                    color = Color.White,
+                    fontSize = 17.sp
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (user != null) {
+
+                    Text(
+                        text = "تم تسجيل الدخول",
+                        color = Color.White,
+                        fontSize = 20.sp
+                    )
+
+                    Text(
+                        text = user.phoneNumber ?: "",
+                        color = Color.LightGray
+                    )
+
+                } else {
+
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = onPhoneChange,
+                        label = { Text("رقم الهاتف") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone
+                        ),
+                        singleLine = true
+                    )
+
+                    if (codeSent) {
+
+                        Spacer

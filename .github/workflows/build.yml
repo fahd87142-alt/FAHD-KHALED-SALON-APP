@@ -28,30 +28,37 @@ jobs:
         with:
           gradle-version: '8.13'
 
-      - name: Create Debug Keystore
+      - name: Restore Debug Keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: fahd-salon-debug-keystore-v1
+
+      - name: Create Debug Keystore If Missing
         run: |
           mkdir -p ~/.android
-          keytool -genkeypair -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -noprompt
-
-      - name: Build APK
-        run: gradle --no-daemon assembleDebug
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -noprompt
+          fi
 
       - name: Get SHA Fingerprints
         run: |
           keytool -list -v \
             -keystore ~/.android/debug.keystore \
             -storepass android \
-            -keypass android \
             -alias androiddebugkey
+
+      - name: Build APK
+        run: gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
